@@ -9,6 +9,7 @@ prediction backtester, decoupled from that domain.
 from .backtest import BacktestEngine, BacktestResult
 from .confidence import firing_confidence
 from .events import Event
+from .loaders import load_garak_events, load_sysmon_events
 from .metrics import ConfusionMatrix, RuleMetrics
 from .ranking import ensemble_weights, rank_rules
 from .report import to_markdown
@@ -21,8 +22,9 @@ from .rules import (
     is_in,
     matches_regex,
 )
+from .sigma import SigmaRule, SigmaUnsupported, load_sigma_file
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     "BacktestEngine",
@@ -41,4 +43,9 @@ __all__ = [
     "ensemble_weights",
     "firing_confidence",
     "to_markdown",
+    "SigmaRule",
+    "SigmaUnsupported",
+    "load_sigma_file",
+    "load_sysmon_events",
+    "load_garak_events",
 ]

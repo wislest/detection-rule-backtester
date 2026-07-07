@@ -30,8 +30,14 @@ false-positive rate is always measured against all benign traffic.
 
 ```bash
 pip install -e ".[dev]"
-python examples/demo_backtest.py   # prints a Markdown report
-pytest                             # run the test suite
+
+# Backtest real Sigma rules against sample corpora (track A + track B):
+drbt --rules examples/rules \
+     --sysmon examples/data/sysmon_sample.jsonl \
+     --garak  examples/data/garak_sample.jsonl
+
+python examples/demo_backtest.py   # same idea, hand-built rules, no Sigma
+pytest                             # run the test suite (12 tests)
 ```
 
 ## What you get
@@ -65,8 +71,42 @@ ensemble weights, a coverage matrix by technique, and an ensemble-firing summary
   analytics like *"3+ prompt-injection attempts within 10 minutes from similar
   IPs"*.
 
-External formats (Sigma via `pySigma`, ATR, compiled KQL) plug in by wrapping
-them as a `Rule` (`feed(event) -> bool`, `reset()`).
+- **`SigmaRule`** — a real Sigma rule loaded from YAML and evaluated **in
+  memory** against each event. `pySigma`/`sigma-cli` only *convert* Sigma into
+  SIEM query languages; backtesting needs to run the `detection:`/`condition:`
+  logic directly, so `drbt` ships a focused evaluator (see below).
+
+Other formats (ATR, compiled KQL) plug in the same way — wrap them as a `Rule`
+(`feed(event) -> bool`, `reset()`).
+
+## Loading real Sigma rules and corpora
+
+```python
+from drbt import BacktestEngine, load_sigma_file, load_sysmon_events, load_garak_events, to_markdown
+
+rules  = [load_sigma_file("examples/rules/encoded_powershell.yml")]
+events = load_sysmon_events("examples/data/sysmon_sample.jsonl")
+print(to_markdown(BacktestEngine(rules).run(events)))
+```
+
+The in-memory Sigma evaluator supports selections (map = AND, list-of-maps =
+OR), field modifiers (`contains`, `startswith`, `endswith`, `re`, `all`), value
+lists, and conditions with `and`/`or`/`not`, parentheses, `1 of`/`all of`, name
+wildcards and `them`. Aggregation conditions (`| count() by ... > N`) are
+rejected with a clear error — model those as a `ThresholdRule` instead.
+
+Loaders normalize public corpora into the `Event` schema:
+
+- **`load_sysmon_events`** — Security-Datasets / Mordor style Windows-event JSONL
+  (track A); labels come from a `label`/`is_attack` field or a callback.
+- **`load_garak_events`** — a NVIDIA garak report JSONL (track B); every probe is
+  an attack, its probe class becomes the technique tag.
+
+> Scoping caveat surfaced by the demo: per-rule *scoped recall* only engages when
+> the rule's `technique` tag matches the corpus label taxonomy. A rule tagged
+> `atlas.aml.t0051` will not scope against events labelled `OWASP-LLM01:*` — keep
+> rule and corpus taxonomies aligned, or scoped recall falls back to overall
+> recall.
 
 ## Datasets to replay (track B)
 
@@ -79,8 +119,10 @@ Pinned locally under `data/` (not committed). Useful public corpora:
 
 ## Status
 
-`v0.1` — core harness, two rule engines, synthetic demo, tests. Scope is a
-focused detection-engineering portfolio piece, **not** a SIEM/SOAR platform.
+`v0.2` — core harness, three rule engines (field / threshold / **in-memory
+Sigma**), corpus loaders (Sysmon + garak), `drbt` CLI, synthetic demo, 12 tests.
+Scope is a focused detection-engineering portfolio piece, **not** a SIEM/SOAR
+platform.
 
 ## License
 

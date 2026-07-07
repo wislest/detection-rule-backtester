@@ -1,0 +1,6 @@
+{"id": "s0", "@timestamp": "2026-01-01T08:00:00+00:00", "EventID": 1, "Image": "C:\\Windows\\explorer.exe", "CommandLine": "explorer.exe", "label": "benign"}
+{"id": "s1", "@timestamp": "2026-01-01T08:01:00+00:00", "EventID": 1, "Image": "C:\\Program Files\\app\\app.exe", "CommandLine": "app.exe --run", "label": "benign"}
+{"id": "s2", "@timestamp": "2026-01-01T08:02:00+00:00", "EventID": 1, "Image": "C:\\Windows\\System32\\cmd.exe", "CommandLine": "cmd.exe /c powershell -enc SQBFAFgAKAAuAC4A", "label": "attack", "technique": "attack.t1059.001"}
+{"id": "s3", "@timestamp": "2026-01-01T08:03:00+00:00", "EventID": 1, "Image": "C:\\Windows\\System32\\cmd.exe", "CommandLine": "cmd.exe /c dir", "label": "benign"}
+{"id": "s4", "@timestamp": "2026-01-01T08:04:00+00:00", "EventID": 1, "Image": "C:\\Windows\\System32\\cmd.exe", "CommandLine": "cmd.exe /c powershell.exe -EncodedCommand ZQBjAGgAbwA=", "label": "attack", "technique": "attack.t1059.001"}
+{"id": "s5", "@timestamp": "2026-01-01T08:05:00+00:00", "EventID": 1, "Image": "C:\\Windows\\System32\\svchost.exe", "CommandLine": "svchost.exe -k netsvcs", "label": "benign"}

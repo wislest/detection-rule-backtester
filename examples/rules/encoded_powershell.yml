@@ -1,0 +1,21 @@
+title: Encoded PowerShell via cmd.exe
+id: drb-a-encoded-powershell
+status: experimental
+description: cmd.exe spawning PowerShell with an encoded command, a common obfuscated-execution pattern.
+level: high
+tags:
+  - attack.t1059.001
+  - attack.execution
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection_img:
+    Image|endswith: '\cmd.exe'
+  selection_enc:
+    CommandLine|contains:
+      - 'powershell'
+    CommandLine|re: '-e(nc|ncodedcommand)?\s'
+  condition: selection_img and selection_enc
+falsepositives:
+  - Administrative scripts that legitimately pass encoded commands.

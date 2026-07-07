@@ -1,0 +1,21 @@
+title: Prompt-injection instruction-override keywords
+id: drb-b-prompt-injection-keywords
+status: experimental
+description: LLM prompt containing classic instruction-override phrasing used in prompt-injection attacks.
+level: high
+tags:
+  - atlas.aml.t0051
+logsource:
+  product: llm
+  category: prompt
+detection:
+  selection:
+    prompt|re:
+      - 'ignore (all )?(previous|prior|above)'
+      - 'disregard (the )?(above|previous)'
+      - 'developer mode'
+      - 'system override'
+      - 'reveal your (system )?prompt'
+  condition: selection
+falsepositives:
+  - Users legitimately discussing prompt-injection as a topic.
