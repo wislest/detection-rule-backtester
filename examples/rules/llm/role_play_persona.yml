@@ -1,0 +1,23 @@
+title: Jailbreak via role-play / persona framing
+id: drb-b-roleplay-persona
+status: experimental
+description: >
+  Prompt instructing the model to adopt a persona or role ("you are now",
+  "act as", "pretend to be", "roleplay") — the dominant framing in real
+  in-the-wild jailbreaks.
+level: medium
+tags:
+  - atlas.aml.t0054
+logsource:
+  product: llm
+  category: prompt
+detection:
+  selection:
+    prompt|re:
+      - 'you (are|will) now'
+      - 'act as'
+      - 'pretend to be'
+      - 'role[\s-]?play'
+  condition: selection
+falsepositives:
+  - Legitimate creative-writing or character-simulation requests.

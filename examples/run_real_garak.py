@@ -63,11 +63,32 @@ def main() -> int:
 
     attacks = load_garak_events(corpus)
     events = attacks + _benign_events()
-    print(f"Loaded {len(attacks)} real garak attack prompts + {len(events) - len(attacks)} benign prompts.\n")
+    n_attacks = len(attacks)
+    print(f"Loaded {n_attacks} real garak attack prompts + {len(events) - n_attacks} benign prompts.\n")
 
-    rule = load_sigma_file(os.path.join(here, "rules", "prompt_injection_keywords.yml"))
-    result = BacktestEngine([rule]).run(events)
+    # A single override-keyword rule vs a multi-family jailbreak rule set. The
+    # harness ranks the families and the ensemble firings show combined recall —
+    # this is the comparison the tool exists to make.
+    rules_dir = os.path.join(here, "rules")
+    keyword_rule = load_sigma_file(os.path.join(rules_dir, "prompt_injection_keywords.yml"))
+    family_rules = [
+        load_sigma_file(os.path.join(rules_dir, "llm", f))
+        for f in sorted(os.listdir(os.path.join(rules_dir, "llm")))
+        if f.endswith((".yml", ".yaml"))
+    ]
+    all_rules = [keyword_rule] + family_rules
+
+    result = BacktestEngine(all_rules).run(events)
     print(to_markdown(result, title="Real payloads — garak jailbreaks vs benign prompts"))
+
+    # Combined (ensemble) recall: an attack is caught if ANY rule fired on it.
+    caught = {f["event_id"] for f in result.firings if f["is_attack"]}
+    print(
+        f"\n**Ensemble recall (any rule fires): {len(caught)}/{n_attacks} = "
+        f"{100 * len(caught) / n_attacks:.1f}%** vs "
+        f"{100 * result.rule_metrics[keyword_rule.id].overall.recall:.1f}% for the "
+        f"override-keyword rule alone."
+    )
     return 0
 
 

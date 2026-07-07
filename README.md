@@ -142,18 +142,24 @@ spots that a field-mapping layer closes.
 
 **Track B — real jailbreak prompts** (666 [in-the-wild jailbreaks](https://github.com/NVIDIA/garak)
 from garak + named DAN/Developer-Mode payloads, vs benign prompts): the
-instruction-override **keyword rule catches ~9% (59/669)** at precision 1.0.
-Most real jailbreaks use role-play/persona framing rather than literal "ignore
-previous instructions" phrasing — a quantified argument for semantic detection
-over keyword rules.
+instruction-override **keyword rule catches only 8.8% (59/669)** at precision
+1.0 — most real jailbreaks use role-play/persona framing, not literal "ignore
+previous instructions". Adding three more rule families (role-play, restriction-
+removal, DAN persona) and letting the harness rank them and vote takes
+**ensemble recall to 70.4% (471/669)** with zero false alarms on benign prompts.
+The harness ranks role-play framing first (weight 0.40) and the override-keyword
+rule last (0.10), matching how often each family appears. The residual ~30% that
+evades every keyword/regex family is the quantified case for semantic detection.
+`run_real_garak.py` prints the full ranking and the ensemble lift.
 
 ## Status
 
-`v0.4` — core harness, three rule engines (field / threshold / **in-memory
+`v0.5` — core harness, three rule engines (field / threshold / **in-memory
 Sigma**), corpus loaders (Sysmon + garak) with cross-schema **field
-normalization**, `drbt` CLI, real-data fetch/run scripts, synthetic demo, 15
-tests. Scope is a focused detection-engineering portfolio piece, **not** a
-SIEM/SOAR platform.
+normalization**, a small jailbreak **rule library** with ensemble ranking,
+`drbt` CLI, real-data fetch/run scripts, synthetic demo, 15 tests. A write-up of
+the findings is in [`docs/writeup.md`](docs/writeup.md). Scope is a focused
+detection-engineering portfolio piece, **not** a SIEM/SOAR platform.
 
 ### Known limitations
 

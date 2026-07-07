@@ -1,0 +1,22 @@
+title: Jailbreak via restriction-removal framing
+id: drb-b-no-restrictions
+status: experimental
+description: >
+  Prompt asserting the model has no restrictions, filters or guidelines, or
+  demanding unfiltered/unrestricted output — a common jailbreak framing.
+level: medium
+tags:
+  - atlas.aml.t0054
+logsource:
+  product: llm
+  category: prompt
+detection:
+  selection:
+    prompt|re:
+      - 'no (restrictions|filters|rules|guidelines|limitations)'
+      - 'without (restrictions|filters|censorship)'
+      - 'unfiltered'
+      - 'unrestricted'
+  condition: selection
+falsepositives:
+  - Discussions about model safety that quote these phrases.

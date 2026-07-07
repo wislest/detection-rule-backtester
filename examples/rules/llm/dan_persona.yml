@@ -1,0 +1,20 @@
+title: Jailbreak via DAN ("Do Anything Now") persona
+id: drb-b-dan-persona
+status: experimental
+description: >
+  Prompt invoking the DAN ("Do Anything Now") jailbreak persona or its
+  variants.
+level: high
+tags:
+  - atlas.aml.t0054
+logsource:
+  product: llm
+  category: prompt
+detection:
+  selection:
+    prompt|re:
+      - '\bdan\b'
+      - 'do anything now'
+  condition: selection
+falsepositives:
+  - Prompts mentioning a person named Dan.
