@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+env/
+
+# Datasets are pulled locally, not committed (pin versions in docs instead).
+data/*
+!data/.gitkeep
+
+# Editor / OS
+.idea/
+.vscode/
+.DS_Store
