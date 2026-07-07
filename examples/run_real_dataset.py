@@ -77,19 +77,30 @@ def main() -> int:
         print("Dataset not found. Run:  bash scripts/fetch_datasets.sh", file=sys.stderr)
         return 2
 
-    events = load_sysmon_events(
-        matches[0], label_fn=empire_label_fn, technique_fn=empire_technique_fn
-    )
-    attacks = sum(1 for e in events if e.is_attack)
-    print(f"Loaded {len(events)} events, {attacks} labelled attack (IOC-anchored).\n")
-
     rules_dir = os.path.join(here, "rules")
-    rules = [
-        load_sigma_file(os.path.join(rules_dir, "encoded_powershell.yml")),
-        load_sigma_file(os.path.join(rules_dir, "regsvr32_squiblydoo.yml")),
-    ]
-    result = BacktestEngine(rules).run(events)
-    print(to_markdown(result, title="Real capture — Empire regsvr32 launcher (Security-Datasets)"))
+
+    def rules():
+        return [
+            load_sigma_file(os.path.join(rules_dir, "encoded_powershell.yml")),
+            load_sigma_file(os.path.join(rules_dir, "regsvr32_squiblydoo.yml")),
+        ]
+
+    # Before/after field normalization: the Squiblydoo rule is keyed on `Image`,
+    # a Sysmon-only field. Without normalization it misses the same process
+    # recorded by Windows Security 4688 (`NewProcessName`); with it, the 4688
+    # record gains `Image` and the rule matches consistently.
+    for normalize in (False, True):
+        events = load_sysmon_events(
+            matches[0],
+            label_fn=empire_label_fn,
+            technique_fn=empire_technique_fn,
+            normalize=normalize,
+        )
+        attacks = sum(1 for e in events if e.is_attack)
+        state = "WITH field normalization" if normalize else "WITHOUT field normalization"
+        print(f"\n=== {state} — {len(events)} events, {attacks} labelled attack (IOC-anchored) ===\n")
+        result = BacktestEngine(rules()).run(events)
+        print(to_markdown(result, title=f"Empire regsvr32 launcher — {state}"))
     return 0
 
 

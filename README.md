@@ -129,12 +129,16 @@ python examples/run_real_garak.py       # track B
 ```
 
 **Track A — Empire regsvr32 launcher** ([OTRF Security-Datasets](https://github.com/OTRF/Security-Datasets),
-2,390 events, attack labelled from the C2 IOC + Squiblydoo process lineage):
-both rules fire at precision 1.0, but the Squiblydoo rule keyed on `Image`
-(a Sysmon-only field) scores **scoped recall 0.5** — it misses the *same* process
-recorded by Windows Security 4688 (`NewProcessName`). Lesson the backtest makes
-concrete: rules keyed on schema-specific fields have blind spots across log
-sources, and this evaluator does not filter by Sigma `logsource`.
+2,390 events, attack labelled from the C2 IOC + Squiblydoo process lineage): both
+rules fire at precision 1.0. The backtest first surfaced a blind spot — the
+Squiblydoo rule keyed on `Image` (a Sysmon-only field) scored **scoped recall
+0.5**, missing the *same* process recorded by Windows Security 4688
+(`NewProcessName`). The fix is field normalization (`load_sysmon_events(...,
+normalize=True)`, the same idea as Sigma pipelines / the OSSEM data dictionary):
+mapping 4688 field names onto Sysmon names takes the Squiblydoo rule to **scoped
+recall 1.0**. `run_real_dataset.py` prints both runs so the before/after is
+explicit. Lesson: rules keyed on schema-specific fields have cross-source blind
+spots that a field-mapping layer closes.
 
 **Track B — real jailbreak prompts** (666 [in-the-wild jailbreaks](https://github.com/NVIDIA/garak)
 from garak + named DAN/Developer-Mode payloads, vs benign prompts): the
@@ -145,10 +149,11 @@ over keyword rules.
 
 ## Status
 
-`v0.3` — core harness, three rule engines (field / threshold / **in-memory
-Sigma**), corpus loaders (Sysmon + garak), `drbt` CLI, real-data fetch/run
-scripts, synthetic demo, 12 tests. Scope is a focused detection-engineering
-portfolio piece, **not** a SIEM/SOAR platform.
+`v0.4` — core harness, three rule engines (field / threshold / **in-memory
+Sigma**), corpus loaders (Sysmon + garak) with cross-schema **field
+normalization**, `drbt` CLI, real-data fetch/run scripts, synthetic demo, 15
+tests. Scope is a focused detection-engineering portfolio piece, **not** a
+SIEM/SOAR platform.
 
 ### Known limitations
 
@@ -159,6 +164,8 @@ portfolio piece, **not** a SIEM/SOAR platform.
   recall.
 - Security-Datasets captures are labelled here by IOC heuristics, not a curated
   ground-truth set — treat absolute precision/recall as indicative.
+- Field normalization (`WINDOWS_FIELD_MAP`) covers the common process-creation
+  fields; extend the map for other channels.
 
 ## License
 

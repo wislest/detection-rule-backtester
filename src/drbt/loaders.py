@@ -47,16 +47,49 @@ def _iter_jsonl(path: str):
                 yield json.loads(line)
 
 
+# Field-name normalization across Windows log schemas. A Sigma process_creation
+# rule is authored against Sysmon (EventID 1) field names, but the *same* process
+# creation is also recorded by Windows Security (EventID 4688) under different
+# names. Backtesting a rule across mixed logs therefore needs a field mapping —
+# the same idea as Sigma processing pipelines / the OSSEM data dictionary.
+# Keys are the source (Security/4688) field, values the canonical Sysmon field.
+WINDOWS_FIELD_MAP = {
+    "NewProcessName": "Image",
+    "ParentProcessName": "ParentImage",
+    "NewProcessId": "ProcessId",
+    "SubjectUserName": "User",
+}
+
+
+def normalize_windows_fields(rec: Dict[str, Any]) -> Dict[str, Any]:
+    """Return a copy with Windows Security field names mapped to Sysmon names.
+
+    Only fills a canonical field when it is missing or empty, so genuine Sysmon
+    records are left untouched and 4688 records gain ``Image``/``ParentImage``.
+    """
+    out = dict(rec)
+    for source_field, canonical in WINDOWS_FIELD_MAP.items():
+        if rec.get(source_field) and not out.get(canonical):
+            out[canonical] = rec[source_field]
+    return out
+
+
 def load_sysmon_events(
     path: str,
     *,
     label_fn: Optional[Callable[[Dict[str, Any]], bool]] = None,
     technique_fn: Optional[Callable[[Dict[str, Any]], Optional[str]]] = None,
+    normalize: bool = False,
 ) -> List[Event]:
     """Load Sysmon/EVTX-style JSONL records (track A).
 
     ``label_fn`` decides ``is_attack`` per record. If omitted, an ``is_attack``
     or ``label`` key on the record is used (``label == "attack"``).
+
+    ``normalize`` maps Windows Security (4688) field names onto Sysmon names via
+    :data:`WINDOWS_FIELD_MAP`, so a Sysmon-authored Sigma rule matches the same
+    process regardless of which channel logged it. ``label_fn`` and
+    ``technique_fn`` still see the *raw* record so their anchors are unaffected.
     """
     events: List[Event] = []
     base = datetime(2026, 1, 1, tzinfo=timezone.utc)
@@ -67,12 +100,13 @@ def load_sysmon_events(
         else:
             is_attack = bool(rec.get("is_attack")) or rec.get("label") == "attack"
         technique = technique_fn(rec) if technique_fn else rec.get("technique")
+        normalized = normalize_windows_fields(rec) if normalize else rec
         events.append(
             Event(
                 id=str(rec.get("id", f"sysmon-{i}")),
                 timestamp=ts,
                 source="sysmon",
-                fields={k: v for k, v in rec.items() if not k.startswith("@")},
+                fields={k: v for k, v in normalized.items() if not k.startswith("@")},
                 is_attack=is_attack,
                 technique=technique,
             )
