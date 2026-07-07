@@ -117,12 +117,48 @@ Pinned locally under `data/` (not committed). Useful public corpora:
 - **NVIDIA garak** — generates a labelled adversarial corpus (every sample is a
   known probe).
 
+## Results on real public data
+
+The harness runs against real public corpora (pinned locally, not committed):
+
+```bash
+bash scripts/fetch_datasets.sh          # pull the datasets into ./data
+python scripts/build_garak_corpus.py    # assemble the track-B corpus
+python examples/run_real_dataset.py     # track A
+python examples/run_real_garak.py       # track B
+```
+
+**Track A — Empire regsvr32 launcher** ([OTRF Security-Datasets](https://github.com/OTRF/Security-Datasets),
+2,390 events, attack labelled from the C2 IOC + Squiblydoo process lineage):
+both rules fire at precision 1.0, but the Squiblydoo rule keyed on `Image`
+(a Sysmon-only field) scores **scoped recall 0.5** — it misses the *same* process
+recorded by Windows Security 4688 (`NewProcessName`). Lesson the backtest makes
+concrete: rules keyed on schema-specific fields have blind spots across log
+sources, and this evaluator does not filter by Sigma `logsource`.
+
+**Track B — real jailbreak prompts** (666 [in-the-wild jailbreaks](https://github.com/NVIDIA/garak)
+from garak + named DAN/Developer-Mode payloads, vs benign prompts): the
+instruction-override **keyword rule catches ~9% (59/669)** at precision 1.0.
+Most real jailbreaks use role-play/persona framing rather than literal "ignore
+previous instructions" phrasing — a quantified argument for semantic detection
+over keyword rules.
+
 ## Status
 
-`v0.2` — core harness, three rule engines (field / threshold / **in-memory
-Sigma**), corpus loaders (Sysmon + garak), `drbt` CLI, synthetic demo, 12 tests.
-Scope is a focused detection-engineering portfolio piece, **not** a SIEM/SOAR
-platform.
+`v0.3` — core harness, three rule engines (field / threshold / **in-memory
+Sigma**), corpus loaders (Sysmon + garak), `drbt` CLI, real-data fetch/run
+scripts, synthetic demo, 12 tests. Scope is a focused detection-engineering
+portfolio piece, **not** a SIEM/SOAR platform.
+
+### Known limitations
+
+- The Sigma evaluator ignores `logsource`; pre-filter events by source yourself,
+  or a `process_creation` rule may also match other event types.
+- Scoped recall only engages when a rule's `technique` tag matches the corpus
+  label taxonomy (e.g. `attack.t1059.001`); otherwise it falls back to overall
+  recall.
+- Security-Datasets captures are labelled here by IOC heuristics, not a curated
+  ground-truth set — treat absolute precision/recall as indicative.
 
 ## License
 

@@ -24,7 +24,7 @@ from .rules import (
 )
 from .sigma import SigmaRule, SigmaUnsupported, load_sigma_file
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 __all__ = [
     "BacktestEngine",
