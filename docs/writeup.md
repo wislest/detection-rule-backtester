@@ -14,11 +14,13 @@ attacks does this rule catch, and how much noise does it make?*
 
 That is a backtest. And the machinery for it is the same machinery you'd build
 to backtest a market strategy, or — in my case — a lottery predictor. Yes, I
-once built a system (LomaXWin) to predict lottery numbers. No, it doesn't work:
-the one honest conclusion that project ever produced is that nothing beats
-random. But the evaluation harness wrapped around those useless models was
-solid. Replay history, score each predictor, rank them, weight an ensemble,
-track drift — all of it spent on a coin flip. So I lifted the harness out, threw
+once built a system (LomaXWin) to predict lottery numbers. No, it doesn't work,
+and I know that precisely because I made the harness prove it: every model run
+against a pure-random baseline over ten thousand simulations, with a chi-square
+test to catch any edge over chance. None of them had one. That could have been
+the end of the project. Instead it was the useful part: the harness around those
+useless models was solid. Replay history, score each predictor, rank them,
+weight an ensemble, track drift, all of it spent on a coin flip. So I lifted the harness out, threw
 away the models, and rewrote the scoring core as a confusion matrix. The result
 is the [Detection Rule Backtester](https://github.com/wislest/detection-rule-backtester).
 
