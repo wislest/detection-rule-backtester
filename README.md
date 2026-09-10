@@ -10,6 +10,19 @@ how many true attacks does it catch and how much noise does it generate against
 my historical data?"* This tool is that harness. It treats a rule as a binary
 classifier over events and scores it against ground truth.
 
+**Findings write-up → [Backtesting detection rules — including the ones for AI attacks](https://wistonlestin.com/posts/backtesting-detection-rules)**
+
+Two results from running it on real public data:
+
+- **Track A** — a Sigma rule that was *right and still blind*: correct logic,
+  scoped recall 0.5, because the harness graded it on a capture whose schema it
+  only half matched. Field normalization took it to 1.0.
+- **Track B** — the prompt-injection rule most teams write first, the one
+  matching *"ignore previous instructions"* and *"developer mode"*, caught
+  **8.8% (59/669)** of in-the-wild jailbreaks at precision 1.0. Adding role-play
+  and restriction-removal rule families and letting the harness rank and vote
+  lifted ensemble recall to **70.4%**, with zero false alarms on the benign set.
+
 The evaluation engine is recycled — deliberately, and decoupled — from a lottery
 prediction backtester (per-detector metrics, weighted ranking, moving-average
 trends, ensemble weighting). The scoring core was rewritten from set-overlap of
@@ -157,8 +170,9 @@ evades every keyword/regex family is the quantified case for semantic detection.
 `v0.5` — core harness, three rule engines (field / threshold / **in-memory
 Sigma**), corpus loaders (Sysmon + garak) with cross-schema **field
 normalization**, a small jailbreak **rule library** with ensemble ranking,
-`drbt` CLI, real-data fetch/run scripts, synthetic demo, 15 tests. A write-up of
-the findings is in [`docs/writeup.md`](docs/writeup.md). Scope is a focused
+`drbt` CLI, real-data fetch/run scripts, synthetic demo, 15 tests. The findings are
+published [on my blog](https://wistonlestin.com/posts/backtesting-detection-rules)
+(source: [`docs/writeup.md`](docs/writeup.md)). Scope is a focused
 detection-engineering portfolio piece, **not** a SIEM/SOAR platform.
 
 ### Known limitations
