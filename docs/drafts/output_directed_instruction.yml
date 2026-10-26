@@ -1,0 +1,21 @@
+title: Indirect injection - instruction aimed at the model's own output
+id: drb-bi-output-directed
+status: experimental
+description: >
+  Third-party content (an email, a table, a code answer) that tells the reader
+  how to shape *its* answer: add a sentence, encode it, translate it, promote
+  something. Human-written content rarely addresses an assistant's response.
+level: medium
+tags:
+  - atlas.aml.t0051.001
+logsource:
+  product: llm
+  category: retrieved_context
+detection:
+  selection:
+    prompt|re:
+      # TODO(Wiston): 3 to 6 patterns. See the guidance in the session.
+      - 'TODO_REPLACE_ME'
+  condition: selection
+falsepositives:
+  - TODO

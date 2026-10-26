@@ -1,0 +1,19 @@
+{
+  "_comment": "Detection quality gate run by CI on every push. Floors are ratchets: raise them when a rule change improves the numbers, never lower them to make a red build pass.",
+  "suites": {
+    "garak_direct": {
+      "description": "Direct jailbreaks (garak in-the-wild + DAN) vs benign assistant prompts",
+      "rule_dirs": ["examples/rules/llm"],
+      "rule_files": ["examples/rules/prompt_injection_keywords.yml"],
+      "min_ensemble_recall": 0.70,
+      "max_false_alarms": 0
+    },
+    "bipia_indirect": {
+      "description": "Indirect injections embedded in real emails, tables and code answers (BIPIA)",
+      "rule_dirs": ["examples/rules/llm_indirect"],
+      "rule_files": [],
+      "min_ensemble_recall": 0.40,
+      "max_false_alarms": 0
+    }
+  }
+}

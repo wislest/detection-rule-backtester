@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]"
+      - run: pytest -q
+
+  detection-quality-gate:
+    # A rule edit that loses coverage or fires on clean content fails the build,
+    # the same way a failing unit test does.
+    needs: tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e .
+      - name: Lint detection rules
+        run: python scripts/quality_gate.py --lint-only
+      - name: Cache public corpora
+        uses: actions/cache@v4
+        with:
+          path: data
+          key: corpora-${{ hashFiles('scripts/fetch_datasets.sh') }}
+      - name: Fetch and build corpora
+        run: |
+          bash scripts/fetch_datasets.sh
+          python scripts/build_garak_corpus.py
+          python scripts/build_bipia_corpus.py
+      - name: Backtest rules against real corpora
+        run: python scripts/quality_gate.py

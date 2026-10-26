@@ -10,12 +10,16 @@ Two adapters ship here, one per track:
   each ``attempt`` carries a ``prompt`` and detector verdicts. Every probe is an
   attack attempt, so events are labelled ``is_attack=True``; the probe class maps
   to a technique tag.
+* :func:`load_bipia_events` — track B, indirect injection. Reads the corpus built
+  from Microsoft BIPIA by ``scripts/build_bipia_corpus.py``: real third-party
+  content, clean or with an attack embedded, labelled per record.
 
 Ground-truth labelling
 -----------------------
 Track A relies on an explicit label field (``label`` / ``is_attack``) or an
 attack-tagging callback, because raw Sysmon logs are unlabelled. Track B is
-self-labelling: garak only emits attack probes.
+self-labelling: garak only emits attack probes. The BIPIA corpus carries its
+own label, because it mixes clean and injected contexts.
 """
 
 from __future__ import annotations
@@ -148,4 +152,36 @@ def load_garak_events(path: str, *, technique_prefix: str = "OWASP-LLM01") -> Li
             )
         )
         idx += 1
+    return events
+
+
+def load_bipia_events(path: str) -> List[Event]:
+    """Load the BIPIA indirect prompt-injection corpus (track B, indirect).
+
+    Each record is one retrieved context — an email, a table or a code answer —
+    either clean or with an attack instruction embedded at the start, middle or
+    end. The content sits in ``prompt``, as a gateway sees it after retrieval.
+    Unlike garak, the corpus holds real negatives, so ``is_attack`` comes from
+    the record.
+    """
+    events: List[Event] = []
+    base = datetime(2026, 1, 3, tzinfo=timezone.utc)
+    for idx, rec in enumerate(_iter_jsonl(path)):
+        if "prompt" not in rec:
+            continue
+        events.append(
+            Event(
+                id=str(rec.get("id", f"bipia-{idx}")),
+                timestamp=_parse_timestamp(rec.get("timestamp"), base),
+                source="llm-gateway",
+                fields={
+                    "prompt": rec["prompt"],
+                    "task": rec.get("task"),
+                    "attack_category": rec.get("attack_category"),
+                    "position": rec.get("position"),
+                },
+                is_attack=bool(rec.get("is_attack")),
+                technique=rec.get("technique"),
+            )
+        )
     return events

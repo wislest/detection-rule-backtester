@@ -11,6 +11,7 @@ from .confidence import firing_confidence
 from .events import Event
 from .loaders import (
     WINDOWS_FIELD_MAP,
+    load_bipia_events,
     load_garak_events,
     load_sysmon_events,
     normalize_windows_fields,
@@ -29,7 +30,7 @@ from .rules import (
 )
 from .sigma import SigmaRule, SigmaUnsupported, load_sigma_file
 
-__version__ = "0.5.0"
+__version__ = "0.6.0"
 
 __all__ = [
     "BacktestEngine",
@@ -53,6 +54,7 @@ __all__ = [
     "load_sigma_file",
     "load_sysmon_events",
     "load_garak_events",
+    "load_bipia_events",
     "normalize_windows_fields",
     "WINDOWS_FIELD_MAP",
 ]

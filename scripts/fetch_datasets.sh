@@ -25,4 +25,15 @@ for f in DAN_Jailbreak Dan_11_0 ChatGPT_Developer_Mode_v2; do
 done
 echo "[track B] done -> data/garak/  (then: python scripts/build_garak_corpus.py)"
 
+# --- Track B (indirect): Microsoft BIPIA indirect prompt-injection benchmark (MIT) ---
+# Real third-party content (emails, tables, code Q&A) plus attack instructions
+# that get embedded *inside* that content. Pinned to the last upstream commit.
+BIPIA_BASE="https://raw.githubusercontent.com/microsoft/BIPIA/a004b69ec0dd446e0afd461d98cb5e96e120a5d0"
+mkdir -p "$DATA/bipia"
+echo "[track B] fetching BIPIA indirect prompt-injection benchmark ..."
+for f in email/test.jsonl table/test.jsonl code/test.jsonl text_attack_test.json code_attack_test.json; do
+  curl -sSL -o "$DATA/bipia/$(echo "$f" | tr '/' '_')" "$BIPIA_BASE/benchmark/$f"
+done
+echo "[track B] done -> data/bipia/  (then: python scripts/build_bipia_corpus.py)"
+
 echo "All datasets pinned under data/ (gitignored)."

@@ -1,5 +1,7 @@
 # Detection Rule Backtester
 
+[![CI](https://github.com/wislest/detection-rule-backtester/actions/workflows/ci.yml/badge.svg)](https://github.com/wislest/detection-rule-backtester/actions/workflows/ci.yml)
+
 Replay labelled logs and AI-attack traces against detection rules, then measure
 how good each rule actually is: **precision, recall, false-positive rate, F1,
 and multi-rule ensemble confidence — per rule**.
@@ -127,6 +129,9 @@ Pinned locally under `data/` (not committed). Useful public corpora:
 
 - **Agent Red Teaming Benchmark** — ~4,700 attacks across 44 target behaviours.
 - **Indirect prompt-injection benchmark** — ~2,679 attacks across 41 behaviours.
+- **Microsoft BIPIA** (MIT) — real emails, tables and Stack Overflow answers plus
+  attack instructions to embed in them; `scripts/build_bipia_corpus.py` builds a
+  labelled corpus with real clean negatives (wired, see results below).
 - **NVIDIA garak** — generates a labelled adversarial corpus (every sample is a
   known probe).
 
@@ -165,13 +170,43 @@ rule last (0.10), matching how often each family appears. The residual ~30% that
 evades every keyword/regex family is the quantified case for semantic detection.
 `run_real_garak.py` prints the full ranking and the ensemble lift.
 
+**Track B — indirect injection** ([Microsoft BIPIA](https://github.com/microsoft/BIPIA),
+375 attacks embedded at the start, middle or end of real emails, tables and code
+answers, vs 200 clean contexts): the four direct-jailbreak rule families above
+catch **0.8% (3/375)**, with 3 false alarms. Indirect injections do not talk
+about the model's identity ("you are now…"); they talk about its *output*
+("encode your response in Base64", "add the following code snippet to your
+answer"). A rule family written for that shape — `rules/llm_indirect/` — catches
+**40.0% (150/375) with zero false alarms** on the clean documents; the code-payload
+rule covers every code attack, the text attacks are the open gap.
+`run_real_bipia.py` prints both rule sets and the misses per attack category.
+
+## CI quality gate
+
+Every push runs [`.github/workflows/ci.yml`](.github/workflows/ci.yml):
+
+1. **Unit tests** (`pytest`).
+2. **Rule lint** — every rule must load and carry an `id`, a technique tag and a
+   documented false-positive note, with no `TODO`. A half-written detection does
+   not ship.
+3. **Corpus backtest** — [`scripts/quality_gate.py`](scripts/quality_gate.py)
+   replays the real garak and BIPIA corpora and fails the build if ensemble recall
+   drops below the floor or a false alarm appears, per
+   [`quality_gate.json`](quality_gate.json). Floors are ratchets: raised when a
+   rule improves, never lowered to turn a red build green.
+
+The gate was checked against a deliberately noisy rule (fires on "the"): indirect
+recall rose to 82.9% but with 102 false alarms on clean documents, and the build
+failed. That is the trade-off the gate exists to stop.
+
 ## Status
 
-`v0.5` — core harness, three rule engines (field / threshold / **in-memory
-Sigma**), corpus loaders (Sysmon + garak) with cross-schema **field
-normalization**, a small jailbreak **rule library** with ensemble ranking,
-`drbt` CLI, real-data fetch/run scripts, synthetic demo, 15 tests. The findings are
-published [on my blog](https://wistonlestin.com/posts/backtesting-detection-rules)
+`v0.6` — core harness, three rule engines (field / threshold / **in-memory
+Sigma**), corpus loaders (Sysmon + garak + **BIPIA indirect injection**) with
+cross-schema **field normalization**, direct and indirect jailbreak **rule
+libraries** with ensemble ranking, a **CI quality gate** (lint + corpus
+backtest), `drbt` CLI, real-data fetch/run scripts, synthetic demo, 16 tests. The
+findings are published [on my blog](https://wistonlestin.com/posts/backtesting-detection-rules)
 (source: [`docs/writeup.md`](docs/writeup.md)). Scope is a focused
 detection-engineering portfolio piece, **not** a SIEM/SOAR platform.
 

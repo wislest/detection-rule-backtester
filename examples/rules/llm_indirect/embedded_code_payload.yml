@@ -1,0 +1,21 @@
+title: Indirect injection - instruction to embed a code payload in the answer
+id: drb-bi-embedded-code-payload
+status: experimental
+description: >
+  Retrieved content that tells the model to add "the following / below /
+  subsequent" code snippet, block or excerpt to its answer. Clean Stack Overflow
+  answers show code; they do not ask the reader's assistant to splice it into
+  its own output.
+level: high
+tags:
+  - atlas.aml.t0051.001
+logsource:
+  product: llm
+  category: retrieved_context
+detection:
+  selection:
+    prompt|re:
+      - '(following|below|subsequent) code (snippet|block|excerpt|section)'
+  condition: selection
+falsepositives:
+  - Tutorials that literally say "the following code snippet shows ...".

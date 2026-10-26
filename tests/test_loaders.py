@@ -1,6 +1,6 @@
 import os
 
-from drbt import load_garak_events, load_sysmon_events
+from drbt import load_bipia_events, load_garak_events, load_sysmon_events
 
 HERE = os.path.dirname(__file__)
 EXAMPLES = os.path.join(HERE, os.pardir, "examples", "data")
@@ -25,3 +25,13 @@ def test_load_garak_skips_bookkeeping_and_labels_attacks():
     assert all(e.source == "llm-gateway" for e in events)
     assert events[0].technique.startswith("OWASP-LLM01:")
     assert "prompt" in events[0].fields
+
+
+def test_load_bipia_keeps_clean_and_injected_labels():
+    events = load_bipia_events(os.path.join(EXAMPLES, "bipia_sample.jsonl"))
+    assert len(events) == 3
+    assert [e.is_attack for e in events] == [False, True, False]
+    # Only injected contexts carry the indirect-injection technique tag.
+    assert events[1].technique == "atlas.aml.t0051.001"
+    assert events[0].technique is None
+    assert events[1].fields["position"] == "end"
